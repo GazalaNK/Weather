@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Weather Now</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #111827;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --accent: #38bdf8;
+      --danger: #f87171;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      background: radial-gradient(1200px 600px at 20% 0%, #0b1220, var(--bg));
+      color: var(--text);
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 560px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      backdrop-filter: blur(6px);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+      overflow: hidden;
+    }
+
+    .header {
+      padding: 20px 20px 0 20px;
+    }
+
+    .title {
+      font-weight: 700;
+      font-size: 1.4rem;
+      letter-spacing: 0.2px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-top: 6px;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      padding: 20px;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: #0b1020;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
+
+    input[type="text"]::placeholder { color: #6b7280; }
+    input[type="text"]:focus { border-color: var(--accent); }
+
+    button {
+      padding: 12px 16px;
+      border-radius: 10px;
+      border: none;
+      background: var(--accent);
+      color: #07263a;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.08s ease, box-shadow 0.2s ease;
+      box-shadow: 0 8px 20px rgba(56, 189, 248, 0.35);
+    }
+
+    button:active { transform: translateY(1px); }
+
+    .unit-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 20px 16px 20px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .results {
+      padding: 16px 20px 24px 20px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .temp {
+      font-size: 2.8rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: 0.95rem;
+      display: grid;
+      gap: 6px;
+    }
+
+    .condition {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+      padding: 10px 12px;
+      background: #0b1020;
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 10px;
+      color: var(--text);
+      max-width: max-content;
+    }
+
+    .status {
+      padding: 10px 20px 20px 20px;
+      color: var(--muted);
+      min-height: 24px;
+    }
+
+    .error { color: var(--danger); }
+    .hidden { display: none; }
+    .footer {
+      padding: 10px 20px 20px 20px;
+      font-size: 0.85rem;
+      color: var(--muted);
+      text-align: right;
+    }
+
+    @media (max-width: 520px) {
+      .row { grid-template-columns: 1fr; }
+      .temp { font-size: 2.2rem; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app" role="main">
+    <div class="header">
+      <div class="title">Weather Now</div>
+      <div class="subtitle">Enter a city, ZIP, or coordinates (e.g., "London", "560001", "12.97,77.59").</div>
+    </div>
+
+    <div class="controls">
+      <input id="locationInput" type="text" placeholder="Search location..." aria-label="Location input" />
+      <button id="searchBtn" aria-label="Get weather">Get weather</button>
+    </div>
+
+    <div class="unit-toggle">
+      <label>
+        <input type="checkbox" id="unitSwitch" />
+        Use Fahrenheit (°F)
+      </label>
+    </div>
+
+    <div class="status" id="status"></div>
+
+    <section class="results hidden" id="results">
+      <div class="row">
+        <div>
+          <div class="temp" id="temp">--°</div>
+          <div class="condition" id="condition">
+            <span id="condText">—</span>
+            <img id="condIcon" alt="Condition icon" class="hidden" />
+          </div>
+        </div>
+        <div class="meta">
+          <div><strong>Location:</strong> <span id="locName">—</span></div>
+          <div><strong>Feels like:</strong> <span id="feels">—</span></div>
+          <div><strong>Humidity:</strong> <span id="humidity">—</span></div>
+          <div><strong>Wind:</strong> <span id="wind">—</span></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="footer">
+      Powered by WeatherAPI
+    </div>
+  </main>
+
+  <script>
+    // Configure your API key here
+    const API_KEY = "5dbc08c757054f06ab354534252511"; // replace if needed
+    const BASE_URL = "https://api.weatherapi.com/v1/current.json";
+
+    const els = {
+      input: document.getElementById("locationInput"),
+      btn: document.getElementById("searchBtn"),
+      status: document.getElementById("status"),
+      results: document.getElementById("results"),
+      unitSwitch: document.getElementById("unitSwitch"),
+      temp: document.getElementById("temp"),
+      condText: document.getElementById("condText"),
+      condIcon: document.getElementById("condIcon"),
+      locName: document.getElementById("locName"),
+      feels: document.getElementById("feels"),
+      humidity: document.getElementById("humidity"),
+      wind: document.getElementById("wind"),
+    };
+
+    let lastData = null;
+
+    function setStatus(message, type = "info") {
+      els.status.textContent = message;
+      els.status.classList.toggle("error", type === "error");
+    }
+
+    function showResults(show) {
+      els.results.classList.toggle("hidden", !show);
+    }
+
+    function formatWind(current, useFahrenheit) {
+      const speedKph = current.wind_kph;
+      const speedMph = current.wind_mph;
+      const dir = current.wind_dir || "";
+      return useFahrenheit ? `${speedMph} mph ${dir}` : `${speedKph} km/h ${dir}`;
+    }
+
+    function render(data, useFahrenheit) {
+      const loc = data.location;
+      const cur = data.current;
+
+      const temp = useFahrenheit ? cur.temp_f : cur.temp_c;
+      const feels = useFahrenheit ? cur.feelslike_f : cur.feelslike_c;
+      const unit = useFahrenheit ? "°F" : "°C";
+
+      els.temp.textContent = `${temp} ${unit}`;
+      els.condText.textContent = cur.condition?.text || "—";
+      if (cur.condition?.icon) {
+        els.condIcon.src = "https:" + cur.condition.icon;
+        els.condIcon.width = 28;
+        els.condIcon.height = 28;
+        els.condIcon.classList.remove("hidden");
+      } else {
+        els.condIcon.classList.add("hidden");
+      }
+
+      els.locName.textContent = `${loc.name}, ${loc.region || loc.country || ""}`.replace(/,\s*$/, "");
+      els.feels.textContent = `${feels} ${unit}`;
+      els.humidity.textContent = `${cur.humidity}%`;
+      els.wind.textContent = formatWind(cur, useFahrenheit);
+
+      showResults(true);
+    }
+
+    async function fetchWeather(query) {
+      const url = new URL(BASE_URL);
+      url.searchParams.set("key", API_KEY);
+      url.searchParams.set("q", query);
+      url.searchParams.set("aqi", "no");
+
+      setStatus("Fetching weather…");
+      showResults(false);
+
+      try {
+        const res = await fetch(url.toString(), { cache: "no-store" });
+        if (!res.ok) {
+          // WeatherAPI returns 400 with a JSON error object for bad queries
+          const err = await res.json().catch(() => ({}));
+          const msg = err?.error?.message || `Request failed (${res.status})`;
+          throw new Error(msg);
+        }
+        const data = await res.json();
+        lastData = data;
+        setStatus("");
+        render(data, els.unitSwitch.checked);
+      } catch (err) {
+        setStatus(err.message || "Something went wrong.", "error");
+      }
+    }
+
+    function handleSearch() {
+      const q = els.input.value.trim();
+      if (!q) {
+        setStatus("Please enter a location.", "error");
+        return;
+      }
+      fetchWeather(q);
+    }
+
+    // Event listeners
+    els.btn.addEventListener("click", handleSearch);
+    els.input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") handleSearch();
+    });
+
+    els.unitSwitch.addEventListener("change", () => {
+      if (lastData) {
+        render(lastData, els.unitSwitch.checked);
+      }
+    });
+
+    // Optional: prefill with user's local example
+    els.input.placeholder = "e.g., Dharwad, 580001, 15.46,75.00";
+  </script>
+</body>
+</html>
